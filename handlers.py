@@ -55,14 +55,15 @@ async def quiz_process(message: types.Message, state: FSMContext):
                 await message.answer(
                     'Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
                     reply_markup=types.ReplyKeyboardRemove())
-                MainDialog.win.set()
+                await MainDialog.win.set()
                 return
             await send_question(bot, message.chat.id, questions[storage['current_question']])
 
 
 @dp.message_handler(state=MainDialog.win)
-async def win(message: types.Message, state: FSMContext):
-    pass
+async def win(message: types.Message):
+    await bot.send_message(message.chat.id,
+                           text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start')
 
 
 @dp.callback_query_handler(factory.filter())
