@@ -35,3 +35,27 @@ async def enter_age(message: types.Message, state: FSMContext):
         await send_question(bot, message.chat.id, questions[storage['current_question']])
     await MainDialog.quiz.set()
 
+
+@dp.message_handler(state=MainDialog.quiz)
+async def quiz_process(message: types.Message, state: FSMContext):
+    async with state.proxy() as storage:
+        current_question = questions[storage['current_question']]
+        if message.text not in current_question.answers:
+            await message.answer('Выберите один из предложенных ответов')
+            return
+        if not current_question.is_right(message.text):
+            await message.answer('Неправильный ответ, попробуйте еще раз')
+        else:
+            await message.answer('Верно! Ответишь на следующий?')
+            storage['current_question'] += 1
+            if storage['current_question'] >= len(questions):
+                await message.answer('Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
+                                     reply_markup=types.ReplyKeyboardRemove())
+                MainDialog.win.set()
+                return
+            await send_question(bot, message.chat.id, questions[storage['current_question']])
+
+
+@dp.message_handler(state=MainDialog.win)
+async def win(message: types.Message, state: FSMContext):
+    pass
