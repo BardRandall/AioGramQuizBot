@@ -1,8 +1,10 @@
-import logging
 import json
+import logging
+
 from aiogram import Bot, Dispatcher, executor
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
+
 from quiz import Question
 
 logging.basicConfig(level=logging.DEBUG)

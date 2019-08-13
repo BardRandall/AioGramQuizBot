@@ -3,7 +3,7 @@ from aiogram.dispatcher import FSMContext
 
 from main import bot, dp, questions
 from dialogs import MainDialog
-from quiz import send_question
+from quiz import send_question, factory
 
 
 @dp.message_handler(commands='start', state='*')
@@ -39,6 +39,8 @@ async def enter_age(message: types.Message, state: FSMContext):
 @dp.message_handler(state=MainDialog.quiz)
 async def quiz_process(message: types.Message, state: FSMContext):
     async with state.proxy() as storage:
+        ### Здесь код повторяется, но мне лень вынести в функцию ###
+        # TODO refactoring
         current_question = questions[storage['current_question']]
         if message.text not in current_question.answers:
             await message.answer('Выберите один из предложенных ответов')
@@ -46,11 +48,13 @@ async def quiz_process(message: types.Message, state: FSMContext):
         if not current_question.is_right(message.text):
             await message.answer('Неправильный ответ, попробуйте еще раз')
         else:
-            await message.answer('Верно! Ответишь на следующий?')
+            await message.answer(text='Верно! Ответишь на следующий?',
+                                 reply_markup=types.ReplyKeyboardRemove())
             storage['current_question'] += 1
             if storage['current_question'] >= len(questions):
-                await message.answer('Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
-                                     reply_markup=types.ReplyKeyboardRemove())
+                await message.answer(
+                    'Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
+                    reply_markup=types.ReplyKeyboardRemove())
                 MainDialog.win.set()
                 return
             await send_question(bot, message.chat.id, questions[storage['current_question']])
@@ -59,3 +63,28 @@ async def quiz_process(message: types.Message, state: FSMContext):
 @dp.message_handler(state=MainDialog.win)
 async def win(message: types.Message, state: FSMContext):
     pass
+
+
+@dp.callback_query_handler(factory.filter())
+async def callback_handler(query: types.CallbackQuery, state: FSMContext):
+    await query.answer()
+    async with state.proxy() as storage:
+        ### Здесь код повторяется, но мне лень вынести в функцию ###
+        # TODO refactoring
+        current_question = questions[storage['current_question']]
+        if query.data not in current_question.answers:
+            await query.answer('Выберите один из предложенных ответов')
+            return
+        if not current_question.is_right(query.data):
+            await bot.send_message(query.message.chat.id, text='Неправильный ответ, попробуйте еще раз')
+        else:
+            await bot.send_message(query.message.chat.id, text='Верно! Ответишь на следующий?',
+                                   reply_markup=types.ReplyKeyboardRemove())
+            storage['current_question'] += 1
+            if storage['current_question'] >= len(questions):
+                await bot.send_message(query.message.chat.id,
+                                       text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
+                                       reply_markup=types.ReplyKeyboardRemove())
+                MainDialog.win.set()
+                return
+            await send_question(bot, query.message.chat.id, questions[storage['current_question']])
