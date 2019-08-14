@@ -67,25 +67,21 @@ async def win(message: types.Message):
 
 
 @dp.callback_query_handler(factory.filter(), state=MainDialog.quiz)
-async def callback_handler(query: types.CallbackQuery, state: FSMContext):
+async def callback_handler(query: types.CallbackQuery, state: FSMContext, callback_data: dict):
     await query.answer()
     async with state.proxy() as storage:
         ### Здесь код повторяется, но мне лень вынести в функцию ###
         # TODO refactoring
         current_question = questions[storage['current_question']]
-        if query.data not in current_question.answers:
-            await query.answer('Выберите один из предложенных ответов')
-            return
-        if not current_question.is_right(query.data):
+        if not current_question.is_right_by_index(int(callback_data['number'])):
             await bot.send_message(query.message.chat.id, text='Неправильный ответ, попробуйте еще раз')
         else:
-            await bot.send_message(query.message.chat.id, text='Верно! Ответишь на следующий?',
-                                   reply_markup=types.ReplyKeyboardRemove())
+            await bot.send_message(query.message.chat.id, text='Верно! Ответишь на следующий?')
             storage['current_question'] += 1
             if storage['current_question'] >= len(questions):
                 await bot.send_message(query.message.chat.id,
                                        text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
                                        reply_markup=types.ReplyKeyboardRemove())
-                MainDialog.win.set()
+                await MainDialog.win.set()
                 return
             await send_question(bot, query.message.chat.id, questions[storage['current_question']])

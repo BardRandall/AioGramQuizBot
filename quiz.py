@@ -16,6 +16,9 @@ class Question:
     def is_right(self, user_answer):
         return user_answer.lower() == self.answers[self.right_answer].lower()
 
+    def is_right_by_index(self, user_index):
+        return self.is_right(self.answers[user_index])
+
 
 async def send_question(bot, chat_id, question):
     if question.keyboard_type == 0:
@@ -24,9 +27,9 @@ async def send_question(bot, chat_id, question):
             keyboard_markup.add(KeyboardButton(q))
     elif question.keyboard_type == 1:
         keyboard_markup = InlineKeyboardMarkup(row_width=2)
-        for i in range(len(question.answers)):
+        for i, q in enumerate(question.answers):
             keyboard_markup.add(
-                InlineKeyboardButton(text=question.answers[i], callback_data=factory.new(number=i))
+                InlineKeyboardButton(text=q, callback_data=factory.new(number=i))
             )
     else:
         keyboard_markup = ReplyKeyboardRemove()
