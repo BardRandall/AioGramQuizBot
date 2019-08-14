@@ -1,12 +1,16 @@
 from aiogram import types
-from aiogram.types import KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import (
+    KeyboardButton,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
 from aiogram.utils.callback_data import CallbackData
 
-factory = CallbackData('quiz_answers', 'number')
+factory = CallbackData("quiz_answers", "number")
 
 
 class Question:
-
     def __init__(self, question, answers, right_answer, keyboard_type):
         self.question = question
         self.answers = answers
@@ -33,4 +37,6 @@ async def send_question(bot, chat_id, question):
             )
     else:
         keyboard_markup = ReplyKeyboardRemove()
-    await bot.send_message(chat_id, text=question.question, reply_markup=keyboard_markup)
+    await bot.send_message(
+        chat_id, text=question.question, reply_markup=keyboard_markup
+    )
