@@ -14,11 +14,10 @@ class Question:
         self.keyboard_type = keyboard_type
 
     def is_right(self, user_answer):
-        return user_answer == self.answers[self.right_answer]
+        return user_answer.lower() == self.answers[self.right_answer].lower()
 
 
 async def send_question(bot, chat_id, question):
-    keyboard_markup = ReplyKeyboardRemove()
     if question.keyboard_type == 0:
         keyboard_markup = types.ReplyKeyboardMarkup(row_width=2)
         for q in question.answers:
@@ -29,4 +28,6 @@ async def send_question(bot, chat_id, question):
             keyboard_markup.add(
                 InlineKeyboardButton(text=question.answers[i], callback_data=factory.new(number=i))
             )
+    else:
+        keyboard_markup = ReplyKeyboardRemove()
     await bot.send_message(chat_id, text=question.question, reply_markup=keyboard_markup)

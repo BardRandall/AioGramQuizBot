@@ -30,7 +30,7 @@
       "Ответ 4"
     ],
     "right_answer": 2,
-    "keyboard_type": 0
+    "keyboard_type": 1
   },
   {
     "question": "Текст вопроса(4)",
@@ -41,6 +41,6 @@
       "Ответ 4"
     ],
     "right_answer": 3,
-    "keyboard_type": 0
+    "keyboard_type": 1
   }
 ]

@@ -66,7 +66,7 @@ async def win(message: types.Message):
                            text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start')
 
 
-@dp.callback_query_handler(factory.filter())
+@dp.callback_query_handler(factory.filter(), state=MainDialog.quiz)
 async def callback_handler(query: types.CallbackQuery, state: FSMContext):
     await query.answer()
     async with state.proxy() as storage:
