@@ -37,51 +37,38 @@ async def enter_age(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=MainDialog.quiz)
-async def quiz_process(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(factory.filter(), state=MainDialog.quiz)
+async def quiz_process2(obj, state: FSMContext, callback_data: dict = None):
     async with state.proxy() as storage:
-        ### Здесь код повторяется, но мне лень вынести в функцию ###
-        # TODO refactoring
         current_question = questions[storage['current_question']]
-        if message.text not in current_question.answers:
-            await message.answer('Выберите один из предложенных ответов')
-            return
-        if not current_question.is_right(message.text):
-            await message.answer('Неправильный ответ, попробуйте еще раз')
-        else:
-            await message.answer(text='Верно! Ответишь на следующий?',
-                                 reply_markup=types.ReplyKeyboardRemove())
-            storage['current_question'] += 1
-            if storage['current_question'] >= len(questions):
-                await message.answer(
-                    'Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
-                    reply_markup=types.ReplyKeyboardRemove())
-                await MainDialog.win.set()
+        if isinstance(obj, types.Message):
+            if obj.text not in current_question.answers:
+                await obj.answer('Выберите один из предложенных ответов')
                 return
-            await send_question(bot, message.chat.id, questions[storage['current_question']])
+            chat_id = obj.chat.id
+            if not current_question.is_right(obj.text):
+                await obj.answer('Неправильный ответ, попробуйте еще раз')
+                return
+        else:
+            await obj.answer()
+            chat_id = obj.message.chat.id
+            if not current_question.is_right_by_index(int(callback_data['number'])):
+                await bot.send_message(chat_id, text='Неправильный ответ, попробуйте еще раз')
+                return
+        await bot.send_message(chat_id, text='Верно! Ответишь на следующий?',
+                               reply_markup=types.ReplyKeyboardRemove())
+        storage['current_question'] += 1
+        if storage['current_question'] >= len(questions):
+            await bot.send_message(
+                chat_id,
+                'Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
+                reply_markup=types.ReplyKeyboardRemove())
+            await MainDialog.win.set()
+            return
+        await send_question(bot, chat_id, questions[storage['current_question']])
 
 
 @dp.message_handler(state=MainDialog.win)
 async def win(message: types.Message):
     await bot.send_message(message.chat.id,
                            text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start')
-
-
-@dp.callback_query_handler(factory.filter(), state=MainDialog.quiz)
-async def callback_handler(query: types.CallbackQuery, state: FSMContext, callback_data: dict):
-    await query.answer()
-    async with state.proxy() as storage:
-        ### Здесь код повторяется, но мне лень вынести в функцию ###
-        # TODO refactoring
-        current_question = questions[storage['current_question']]
-        if not current_question.is_right_by_index(int(callback_data['number'])):
-            await bot.send_message(query.message.chat.id, text='Неправильный ответ, попробуйте еще раз')
-        else:
-            await bot.send_message(query.message.chat.id, text='Верно! Ответишь на следующий?')
-            storage['current_question'] += 1
-            if storage['current_question'] >= len(questions):
-                await bot.send_message(query.message.chat.id,
-                                       text='Ой, вопросы для вас закончились, приходите завтра или пройдите заново, нажав /start',
-                                       reply_markup=types.ReplyKeyboardRemove())
-                await MainDialog.win.set()
-                return
-            await send_question(bot, query.message.chat.id, questions[storage['current_question']])
