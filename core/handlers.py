@@ -1,9 +1,9 @@
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-from main import bot, dp, questions
-from dialogs import MainDialog
-from quiz import send_question, factory
+from core.initialization import bot, dp, questions
+from core.dialogs import MainDialog
+from core.quiz import send_question, factory
 
 
 @dp.message_handler(commands="start", state="*")
